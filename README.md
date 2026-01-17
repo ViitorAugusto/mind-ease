@@ -17,7 +17,6 @@ Back-end profissional para aplicativo de timer Pomodoro, construído com Node.js
 ### ✅ MVP Implementado
 
 - **Autenticação**
-
   - Registro de usuário
   - Login com JWT
   - Refresh token
@@ -25,7 +24,6 @@ Back-end profissional para aplicativo de timer Pomodoro, construído com Node.js
   - Rota `/me` para obter usuário atual
 
 - **Configurações Pomodoro**
-
   - GET/PUT configurações personalizadas
   - Tempo de foco (padrão: 25 min)
   - Descanso curto (padrão: 5 min)
@@ -33,7 +31,6 @@ Back-end profissional para aplicativo de timer Pomodoro, construído com Node.js
   - Intervalo para descanso longo (padrão: a cada 4 focos)
 
 - **Sessões (Timer)**
-
   - Iniciar sessão (FOCUS, SHORT_BREAK, LONG_BREAK)
   - Finalizar sessão (COMPLETED, CANCELED, EXPIRED)
   - Consultar sessão ativa
@@ -382,17 +379,6 @@ npm run prisma:generate  # Gerar cliente Prisma
 npm run prisma:migrate   # Criar/aplicar migrations
 npm run prisma:studio    # Abrir Prisma Studio (GUI)
 ```
-
-## 🚧 Próximos Passos (Opcional)
-
-- [ ] Kanban/Tarefas (vincular sessões a tarefas)
-- [ ] WebSocket/SSE para eventos em tempo real
-- [ ] Auditoria de mudanças de configuração
-- [ ] Testes unitários e de integração
-- [ ] Docker e docker-compose
-- [ ] Rate limiting
-- [ ] Logs estruturados
-- [ ] Documentação OpenAPI/Swagger
 
 ## 📄 Licença
 
