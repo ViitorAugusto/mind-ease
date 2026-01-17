@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  settings      PomodoroSettings?
+  sessions      PomodoroSession[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model PomodoroSettings {
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  focusMinutes        Int      @default(25) @map("focus_minutes")
+  shortBreakMinutes   Int      @default(5) @map("short_break_minutes")
+  longBreakMinutes    Int      @default(15) @map("long_break_minutes")
+  longBreakEvery      Int      @default(4) @map("long_break_every")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pomodoro_settings")
+}
+
+enum SessionType {
+  FOCUS
+  SHORT_BREAK
+  LONG_BREAK
+}
+
+enum SessionStatus {
+  COMPLETED
+  CANCELED
+  EXPIRED
+}
+
+model PomodoroSession {
+  id                       String        @id @default(uuid())
+  userId                   String        @map("user_id")
+  taskId                   String?       @map("task_id")
+  type                     SessionType
+  status                   SessionStatus
+  startedAt                DateTime      @map("started_at")
+  endedAt                  DateTime?     @map("ended_at")
+  plannedDurationSeconds   Int           @map("planned_duration_seconds")
+  actualDurationSeconds    Int?          @map("actual_duration_seconds")
+  meta                     Json?         // for extra info like cancel reason
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+  @@map("pomodoro_sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
