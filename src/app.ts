@@ -29,7 +29,7 @@ export async function buildApp() {
           url:
             config.nodeEnv === "development"
               ? `http://localhost:${config.port}`
-              : "https://mind-ease.onrender.com",
+              : "https://mind-ease-7ky3.onrender.com",
           description:
             config.nodeEnv === "development"
               ? "Development server"
