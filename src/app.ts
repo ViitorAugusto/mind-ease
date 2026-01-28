@@ -26,8 +26,14 @@ export async function buildApp() {
       },
       servers: [
         {
-          url: `http://localhost:${config.port}`,
-          description: "Development server",
+          url:
+            config.nodeEnv === "development"
+              ? `http://localhost:${config.port}`
+              : "https://mind-ease.onrender.com",
+          description:
+            config.nodeEnv === "development"
+              ? "Development server"
+              : "Production",
         },
       ],
       components: {
@@ -77,7 +83,7 @@ export async function buildApp() {
   await fastify.register(sessionsRoutes);
   await fastify.register(historyRoutes);
 
-  fastify.setErrorHandler((error, request, reply) => {
+  fastify.setErrorHandler((error, _request, reply) => {
     fastify.log.error(error);
 
     reply.status(error.statusCode || 500).send({
