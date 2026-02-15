@@ -13,7 +13,7 @@ export class SessionsService {
 
     if (activeSession) {
       throw new Error(
-        "You already have an active session. Please finish it first.",
+        "Voce ja possui uma sessao ativa. Finalize-a antes de iniciar outra.",
       );
     }
 
@@ -22,7 +22,7 @@ export class SessionsService {
     });
 
     if (!settings) {
-      throw new Error("Settings not found");
+      throw new Error("Configuracoes nao encontradas");
     }
 
     let plannedDurationSeconds: number;
@@ -37,7 +37,7 @@ export class SessionsService {
         plannedDurationSeconds = settings.longBreakMinutes * 60;
         break;
       default:
-        throw new Error("Invalid session type");
+        throw new Error("Tipo de sessao invalido");
     }
 
     const session = await prisma.pomodoroSession.create({
@@ -67,11 +67,11 @@ export class SessionsService {
     });
 
     if (!session) {
-      throw new Error("Session not found");
+      throw new Error("Sessao nao encontrada");
     }
 
     if (session.endedAt) {
-      throw new Error("Session already finished");
+      throw new Error("Sessao ja finalizada");
     }
 
     const endedAt = data.endedAt ? new Date(data.endedAt) : new Date();

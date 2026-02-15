@@ -8,6 +8,8 @@ import { authRoutes } from "./modules/auth/routes";
 import { pomodoroRoutes } from "./modules/pomodoro/routes";
 import { sessionsRoutes } from "./modules/sessions/routes";
 import { historyRoutes } from "./modules/history/routes";
+import { boardsRoutes } from "./modules/boards/routes";
+import { tasksRoutes } from "./modules/tasks/routes";
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -50,6 +52,8 @@ export async function buildApp() {
         { name: "Settings", description: "Configurações do Pomodoro" },
         { name: "Sessions", description: "Gerenciamento de sessões" },
         { name: "History", description: "Histórico e estatísticas" },
+        { name: "Boards", description: "Boards do usuario" },
+        { name: "Tasks", description: "Tasks do usuario" },
       ],
     },
   });
@@ -82,12 +86,14 @@ export async function buildApp() {
   await fastify.register(pomodoroRoutes);
   await fastify.register(sessionsRoutes);
   await fastify.register(historyRoutes);
+  await fastify.register(boardsRoutes);
+  await fastify.register(tasksRoutes);
 
   fastify.setErrorHandler((error, _request, reply) => {
     fastify.log.error(error);
 
     reply.status(error.statusCode || 500).send({
-      error: error.message || "Internal server error",
+      error: error.message || "Erro interno do servidor",
     });
   });
 

@@ -193,7 +193,7 @@ export async function sessionsRoutes(fastify: FastifyInstance) {
         );
 
         if (!session) {
-          return reply.status(404).send({ error: "No active session" });
+          return reply.status(404).send({ error: "Nenhuma sessao ativa" });
         }
 
         return reply.send(session);

@@ -12,7 +12,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new Error("Usuario ja existe");
     }
 
     const passwordHash = await hashPassword(data.password);
@@ -48,7 +48,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new Error("Credenciais invalidas");
     }
 
     const isPasswordValid = await comparePassword(
@@ -57,7 +57,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
+      throw new Error("Credenciais invalidas");
     }
 
     return {
@@ -91,14 +91,14 @@ export class AuthService {
     });
 
     if (!refreshToken) {
-      throw new Error("Invalid refresh token");
+      throw new Error("Refresh token invalido");
     }
 
     if (refreshToken.expiresAt < new Date()) {
       await prisma.refreshToken.delete({
         where: { id: refreshToken.id },
       });
-      throw new Error("Refresh token expired");
+      throw new Error("Refresh token expirado");
     }
 
     return {
@@ -134,7 +134,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("Usuario nao encontrado");
     }
 
     return user;

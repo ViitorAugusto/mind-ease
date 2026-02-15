@@ -20,6 +20,8 @@ model User {
 
   settings      PomodoroSettings?
   sessions      PomodoroSession[]
+  boards        Board[]
+  tasks         Task[]
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -51,6 +53,12 @@ enum SessionStatus {
   EXPIRED
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
 model PomodoroSession {
   id                       String        @id @default(uuid())
   userId                   String        @map("user_id")
@@ -67,6 +75,39 @@ model PomodoroSession {
 
   @@index([userId, startedAt])
   @@map("pomodoro_sessions")
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([userId])
+  @@map("boards")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  boardId     String     @map("board_id")
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?  @map("due_date")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([userId, boardId])
+  @@map("tasks")
 }
 
 model RefreshToken {

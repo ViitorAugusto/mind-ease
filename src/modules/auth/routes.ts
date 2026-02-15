@@ -231,7 +231,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         const { refreshToken } = refreshTokenSchema.parse(request.body);
         await authService.revokeRefreshToken(refreshToken);
 
-        return reply.send({ message: "Logged out successfully" });
+        return reply.send({ message: "Logout realizado com sucesso" });
       } catch (error: any) {
         return reply.status(400).send({ error: error.message });
       }

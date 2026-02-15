@@ -1,7 +1,7 @@
 export function parseExpiresIn(expiresIn: string): number {
   const match = expiresIn.match(/^(\d+)([smhd])$/);
   if (!match) {
-    throw new Error("Invalid expiresIn format");
+    throw new Error("Formato de expiresIn invalido");
   }
 
   const value = parseInt(match[1], 10);
@@ -17,7 +17,7 @@ export function parseExpiresIn(expiresIn: string): number {
     case "d":
       return value * 24 * 60 * 60;
     default:
-      throw new Error("Invalid time unit");
+      throw new Error("Unidade de tempo invalida");
   }
 }
 

@@ -7,6 +7,6 @@ export async function authGuard(
   try {
     await request.jwtVerify();
   } catch (err) {
-    reply.status(401).send({ error: "Unauthorized" });
+    reply.status(401).send({ error: "Nao autorizado" });
   }
 }
