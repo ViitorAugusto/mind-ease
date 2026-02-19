@@ -1,12 +1,94 @@
 import prisma from "../../shared/db/prisma";
-import { UpdateBoardInput } from "./schemas";
+import { CreateBoardInput, UpdateBoardInput } from "./schemas";
+
+type BoardWithMetrics = {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  color: string;
+  createdAt: Date;
+  updatedAt: Date;
+  tasksCount: number;
+  totalHours: number;
+};
+
+function mapBoardWithMetrics(board: {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  color: string;
+  createdAt: Date;
+  updatedAt: Date;
+  columns: Array<{ tasks: Array<{ hours: number }> }>;
+}): BoardWithMetrics {
+  let tasksCount = 0;
+  let totalHours = 0;
+
+  for (const column of board.columns) {
+    tasksCount += column.tasks.length;
+    for (const task of column.tasks) {
+      totalHours += task.hours;
+    }
+  }
+
+  return {
+    id: board.id,
+    userId: board.userId,
+    name: board.name,
+    description: board.description,
+    color: board.color,
+    createdAt: board.createdAt,
+    updatedAt: board.updatedAt,
+    tasksCount,
+    totalHours,
+  };
+}
 
 export class BoardsService {
+  async create(userId: string, data: CreateBoardInput) {
+    const board = await prisma.board.create({
+      data: {
+        userId,
+        name: data.name,
+        description: data.description ?? null,
+        color: data.color,
+      },
+      include: {
+        columns: {
+          select: {
+            tasks: {
+              select: {
+                hours: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return mapBoardWithMetrics(board);
+  }
+
   async getAll(userId: string) {
-    return prisma.board.findMany({
+    const boards = await prisma.board.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
+      include: {
+        columns: {
+          select: {
+            tasks: {
+              select: {
+                hours: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    return boards.map(mapBoardWithMetrics);
   }
 
   async getById(userId: string, boardId: string) {
@@ -15,13 +97,24 @@ export class BoardsService {
         id: boardId,
         userId,
       },
+      include: {
+        columns: {
+          select: {
+            tasks: {
+              select: {
+                hours: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!board) {
       throw new Error("Board nao encontrado");
     }
 
-    return board;
+    return mapBoardWithMetrics(board);
   }
 
   async update(userId: string, boardId: string, data: UpdateBoardInput) {
@@ -30,6 +123,7 @@ export class BoardsService {
     const updateData: {
       name?: string;
       description?: string | null;
+      color?: string;
     } = {};
 
     if (data.name !== undefined) {
@@ -40,10 +134,27 @@ export class BoardsService {
       updateData.description = data.description ?? null;
     }
 
-    return prisma.board.update({
+    if (data.color !== undefined) {
+      updateData.color = data.color;
+    }
+
+    const board = await prisma.board.update({
       where: { id: boardId },
       data: updateData,
+      include: {
+        columns: {
+          select: {
+            tasks: {
+              select: {
+                hours: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    return mapBoardWithMetrics(board);
   }
 
   async delete(userId: string, boardId: string) {

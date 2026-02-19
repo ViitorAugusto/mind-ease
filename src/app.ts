@@ -9,6 +9,7 @@ import { pomodoroRoutes } from "./modules/pomodoro/routes";
 import { sessionsRoutes } from "./modules/sessions/routes";
 import { historyRoutes } from "./modules/history/routes";
 import { boardsRoutes } from "./modules/boards/routes";
+import { columnsRoutes } from "./modules/columns/routes";
 import { tasksRoutes } from "./modules/tasks/routes";
 
 export async function buildApp() {
@@ -23,7 +24,7 @@ export async function buildApp() {
       info: {
         title: "Mind Ease - Pomodoro API",
         description:
-          "API para gerenciamento de sessões Pomodoro com autenticação JWT",
+          "API para gerenciamento de sessoes Pomodoro com autenticacao JWT",
         version: "1.0.0",
       },
       servers: [
@@ -48,11 +49,12 @@ export async function buildApp() {
         },
       },
       tags: [
-        { name: "Auth", description: "Autenticação e autorização" },
-        { name: "Settings", description: "Configurações do Pomodoro" },
-        { name: "Sessions", description: "Gerenciamento de sessões" },
-        { name: "History", description: "Histórico e estatísticas" },
+        { name: "Auth", description: "Autenticacao e autorizacao" },
+        { name: "Settings", description: "Configuracoes do Pomodoro" },
+        { name: "Sessions", description: "Gerenciamento de sessoes" },
+        { name: "History", description: "Historico e estatisticas" },
         { name: "Boards", description: "Boards do usuario" },
+        { name: "Columns", description: "Colunas dos boards" },
         { name: "Tasks", description: "Tasks do usuario" },
       ],
     },
@@ -87,6 +89,7 @@ export async function buildApp() {
   await fastify.register(sessionsRoutes);
   await fastify.register(historyRoutes);
   await fastify.register(boardsRoutes);
+  await fastify.register(columnsRoutes);
   await fastify.register(tasksRoutes);
 
   fastify.setErrorHandler((error, _request, reply) => {

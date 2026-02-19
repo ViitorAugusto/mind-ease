@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { authGuard } from "../../shared/middleware/auth";
-import { taskIdParamSchema, updateTaskSchema } from "./schemas";
+import { createTaskSchema, taskIdParamSchema, updateTaskSchema } from "./schemas";
 import { tasksService } from "./service";
 
 const taskSchema = {
@@ -8,18 +8,28 @@ const taskSchema = {
   properties: {
     id: { type: "string", format: "uuid" },
     userId: { type: "string", format: "uuid" },
-    boardId: { type: "string", format: "uuid" },
+    columnId: { type: "string", format: "uuid" },
     title: { type: "string" },
     description: { type: "string", nullable: true },
     status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
     dueDate: { type: "string", format: "date-time", nullable: true },
+    hours: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
-    board: {
+    column: {
       type: "object",
       properties: {
         id: { type: "string", format: "uuid" },
         name: { type: "string" },
+        slug: { type: "string" },
+        board: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            color: { type: "string" },
+          },
+        },
       },
     },
   },
@@ -28,7 +38,7 @@ const taskSchema = {
 function getTaskErrorStatus(error: Error) {
   if (
     error.message === "Task nao encontrada" ||
-    error.message === "Board nao encontrado"
+    error.message === "Column nao encontrada"
   ) {
     return 404;
   }
@@ -37,6 +47,53 @@ function getTaskErrorStatus(error: Error) {
 }
 
 export async function tasksRoutes(fastify: FastifyInstance) {
+  fastify.post(
+    "/tasks",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Tasks"],
+        description: "Criar task",
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: "object",
+          required: ["columnId", "title"],
+          properties: {
+            columnId: { type: "string", format: "uuid" },
+            title: { type: "string", minLength: 1, maxLength: 200 },
+            description: { type: "string", maxLength: 2000, nullable: true },
+            status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
+            dueDate: { type: "string", format: "date-time", nullable: true },
+            hours: { type: "number", minimum: 0 },
+          },
+        },
+        response: {
+          201: {
+            description: "Task criada",
+            ...taskSchema,
+          },
+          404: {
+            description: "Column nao encontrada",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const data = createTaskSchema.parse(request.body);
+        const task = await tasksService.create(request.user.userId, data);
+        return reply.status(201).send(task);
+      } catch (error: any) {
+        const status = getTaskErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
+      }
+    },
+  );
+
   fastify.get(
     "/tasks",
     {
@@ -124,11 +181,12 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         body: {
           type: "object",
           properties: {
-            boardId: { type: "string", format: "uuid" },
+            columnId: { type: "string", format: "uuid" },
             title: { type: "string", minLength: 1, maxLength: 200 },
             description: { type: "string", maxLength: 2000, nullable: true },
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
+            hours: { type: "number", minimum: 0 },
           },
         },
         response: {
@@ -137,7 +195,7 @@ export async function tasksRoutes(fastify: FastifyInstance) {
             ...taskSchema,
           },
           404: {
-            description: "Task ou board nao encontrado",
+            description: "Task ou column nao encontrada",
             type: "object",
             properties: {
               error: { type: "string" },

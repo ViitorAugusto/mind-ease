@@ -1,6 +1,10 @@
 import { FastifyInstance } from "fastify";
 import { authGuard } from "../../shared/middleware/auth";
-import { boardIdParamSchema, updateBoardSchema } from "./schemas";
+import {
+  boardIdParamSchema,
+  createBoardSchema,
+  updateBoardSchema,
+} from "./schemas";
 import { boardsService } from "./service";
 
 const boardSchema = {
@@ -10,6 +14,9 @@ const boardSchema = {
     userId: { type: "string", format: "uuid" },
     name: { type: "string" },
     description: { type: "string", nullable: true },
+    color: { type: "string" },
+    tasksCount: { type: "number" },
+    totalHours: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
   },
@@ -24,6 +31,52 @@ function getBoardErrorStatus(error: Error) {
 }
 
 export async function boardsRoutes(fastify: FastifyInstance) {
+  fastify.post(
+    "/boards",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Boards"],
+        description: "Criar novo board",
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: { type: "string", minLength: 1, maxLength: 120 },
+            description: { type: "string", maxLength: 1000, nullable: true },
+            color: {
+              type: "string",
+              pattern: "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$",
+            },
+          },
+        },
+        response: {
+          201: {
+            description: "Board criado",
+            ...boardSchema,
+          },
+          400: {
+            description: "Erro de validacao",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const data = createBoardSchema.parse(request.body);
+        const board = await boardsService.create(request.user.userId, data);
+        return reply.status(201).send(board);
+      } catch (error: any) {
+        return reply.status(400).send({ error: error.message });
+      }
+    },
+  );
+
   fastify.get(
     "/boards",
     {
@@ -113,6 +166,10 @@ export async function boardsRoutes(fastify: FastifyInstance) {
           properties: {
             name: { type: "string", minLength: 1, maxLength: 120 },
             description: { type: "string", maxLength: 1000, nullable: true },
+            color: {
+              type: "string",
+              pattern: "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$",
+            },
           },
         },
         response: {
