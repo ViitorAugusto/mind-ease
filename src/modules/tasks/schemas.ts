@@ -4,6 +4,10 @@ export const taskIdParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const taskColumnIdParamSchema = z.object({
+  columnId: z.string().uuid(),
+});
+
 export const createTaskSchema = z.object({
   columnId: z.string().uuid(),
   title: z.string().min(1).max(200),

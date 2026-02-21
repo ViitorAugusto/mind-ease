@@ -73,6 +73,34 @@ export class TasksService {
     });
   }
 
+  async getAllByColumn(userId: string, columnId: string) {
+    await this.findColumn(userId, columnId);
+
+    return prisma.task.findMany({
+      where: {
+        userId,
+        columnId,
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        column: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            board: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async getById(userId: string, taskId: string) {
     const task = await prisma.task.findFirst({
       where: {

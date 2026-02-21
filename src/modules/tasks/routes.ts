@@ -1,6 +1,11 @@
 import { FastifyInstance } from "fastify";
 import { authGuard } from "../../shared/middleware/auth";
-import { createTaskSchema, taskIdParamSchema, updateTaskSchema } from "./schemas";
+import {
+  createTaskSchema,
+  taskColumnIdParamSchema,
+  taskIdParamSchema,
+  updateTaskSchema,
+} from "./schemas";
 import { tasksService } from "./service";
 
 const taskSchema = {
@@ -117,6 +122,52 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         return reply.send(tasks);
       } catch (error: any) {
         return reply.status(500).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/tasks/column/:columnId",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Tasks"],
+        description: "Listar tasks por coluna",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["columnId"],
+          properties: {
+            columnId: { type: "string", format: "uuid" },
+          },
+        },
+        response: {
+          200: {
+            description: "Lista de tasks da coluna",
+            type: "array",
+            items: taskSchema,
+          },
+          404: {
+            description: "Column nao encontrada",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { columnId } = taskColumnIdParamSchema.parse(request.params);
+        const tasks = await tasksService.getAllByColumn(
+          request.user.userId,
+          columnId,
+        );
+        return reply.send(tasks);
+      } catch (error: any) {
+        const status = getTaskErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
       }
     },
   );
