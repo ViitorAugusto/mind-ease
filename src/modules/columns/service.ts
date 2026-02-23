@@ -134,6 +134,34 @@ export class ColumnsService {
     return columns.map(mapColumn);
   }
 
+  async getAllByBoard(userId: string, boardId: string) {
+    await this.ensureBoard(userId, boardId);
+
+    const columns = await prisma.column.findMany({
+      where: {
+        userId,
+        boardId,
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        board: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        _count: {
+          select: {
+            tasks: true,
+          },
+        },
+      },
+    });
+
+    return columns.map(mapColumn);
+  }
+
   async getById(userId: string, columnId: string) {
     const column = await prisma.column.findFirst({
       where: {

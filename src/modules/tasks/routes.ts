@@ -16,6 +16,17 @@ const taskSchema = {
     columnId: { type: "string", format: "uuid" },
     title: { type: "string" },
     description: { type: "string", nullable: true },
+    checklist: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          text: { type: "string" },
+          isConcluded: { type: "boolean" },
+        },
+      },
+    },
     status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
     dueDate: { type: "string", format: "date-time", nullable: true },
     hours: { type: "number" },
@@ -67,6 +78,18 @@ export async function tasksRoutes(fastify: FastifyInstance) {
             columnId: { type: "string", format: "uuid" },
             title: { type: "string", minLength: 1, maxLength: 200 },
             description: { type: "string", maxLength: 2000, nullable: true },
+            checklist: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["id", "text", "isConcluded"],
+                properties: {
+                  id: { type: "string" },
+                  text: { type: "string" },
+                  isConcluded: { type: "boolean" },
+                },
+              },
+            },
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },
@@ -235,6 +258,18 @@ export async function tasksRoutes(fastify: FastifyInstance) {
             columnId: { type: "string", format: "uuid" },
             title: { type: "string", minLength: 1, maxLength: 200 },
             description: { type: "string", maxLength: 2000, nullable: true },
+            checklist: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["id", "text", "isConcluded"],
+                properties: {
+                  id: { type: "string" },
+                  text: { type: "string" },
+                  isConcluded: { type: "boolean" },
+                },
+              },
+            },
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },

@@ -1,4 +1,4 @@
-import { TaskStatus } from "@prisma/client";
+import { Prisma, TaskStatus } from "@prisma/client";
 import prisma from "../../shared/db/prisma";
 import { CreateTaskInput, UpdateTaskInput } from "./schemas";
 
@@ -21,16 +21,19 @@ export class TasksService {
   async create(userId: string, data: CreateTaskInput) {
     await this.findColumn(userId, data.columnId);
 
+    const createData: Prisma.TaskUncheckedCreateInput = {
+      userId,
+      columnId: data.columnId,
+      title: data.title,
+      description: data.description ?? null,
+      checklist: (data.checklist ?? []) as Prisma.InputJsonValue,
+      status: (data.status as TaskStatus | undefined) ?? TaskStatus.TODO,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      hours: data.hours ?? 0,
+    };
+
     return prisma.task.create({
-      data: {
-        userId,
-        columnId: data.columnId,
-        title: data.title,
-        description: data.description ?? null,
-        status: (data.status as TaskStatus | undefined) ?? TaskStatus.TODO,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        hours: data.hours ?? 0,
-      },
+      data: createData,
       include: {
         column: {
           select: {
@@ -143,6 +146,7 @@ export class TasksService {
       columnId?: string;
       title?: string;
       description?: string | null;
+      checklist?: Prisma.InputJsonValue;
       status?: TaskStatus;
       dueDate?: Date | null;
       hours?: number;
@@ -158,6 +162,10 @@ export class TasksService {
 
     if (Object.prototype.hasOwnProperty.call(data, "description")) {
       updateData.description = data.description ?? null;
+    }
+
+    if (data.checklist !== undefined) {
+      updateData.checklist = data.checklist as Prisma.InputJsonValue;
     }
 
     if (data.status !== undefined) {

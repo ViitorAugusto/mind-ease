@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { authGuard } from "../../shared/middleware/auth";
 import {
+  columnBoardIdParamSchema,
   columnIdParamSchema,
   columnSlugParamSchema,
   createColumnSchema,
@@ -108,6 +109,52 @@ export async function columnsRoutes(fastify: FastifyInstance) {
         return reply.send(columns);
       } catch (error: any) {
         return reply.status(500).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/columns/board/:boardId",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Columns"],
+        description: "Listar colunas por board",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["boardId"],
+          properties: {
+            boardId: { type: "string", format: "uuid" },
+          },
+        },
+        response: {
+          200: {
+            description: "Lista de colunas do board",
+            type: "array",
+            items: columnSchema,
+          },
+          404: {
+            description: "Board nao encontrado",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { boardId } = columnBoardIdParamSchema.parse(request.params);
+        const columns = await columnsService.getAllByBoard(
+          request.user.userId,
+          boardId,
+        );
+        return reply.send(columns);
+      } catch (error: any) {
+        const status = getColumnErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
       }
     },
   );

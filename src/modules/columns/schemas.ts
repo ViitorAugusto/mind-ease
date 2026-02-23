@@ -8,6 +8,10 @@ export const columnSlugParamSchema = z.object({
   slug: z.string().min(1).max(140),
 });
 
+export const columnBoardIdParamSchema = z.object({
+  boardId: z.string().uuid(),
+});
+
 export const createColumnSchema = z.object({
   boardId: z.string().uuid(),
   name: z.string().min(1).max(120),
