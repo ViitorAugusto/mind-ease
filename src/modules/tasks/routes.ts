@@ -13,6 +13,7 @@ const taskSchema = {
   properties: {
     id: { type: "string", format: "uuid" },
     userId: { type: "string", format: "uuid" },
+    boardId: { type: "string", format: "uuid" },
     columnId: { type: "string", format: "uuid" },
     title: { type: "string" },
     description: { type: "string", nullable: true },
@@ -28,6 +29,8 @@ const taskSchema = {
       },
     },
     status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
+    enableSoundAlerts: { type: "boolean" },
+    isConcluded: { type: "boolean" },
     dueDate: { type: "string", format: "date-time", nullable: true },
     hours: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
@@ -73,8 +76,9 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         security: [{ bearerAuth: [] }],
         body: {
           type: "object",
-          required: ["columnId", "title"],
+          required: ["boardId", "columnId", "title"],
           properties: {
+            boardId: { type: "string", format: "uuid" },
             columnId: { type: "string", format: "uuid" },
             title: { type: "string", minLength: 1, maxLength: 200 },
             description: { type: "string", maxLength: 2000, nullable: true },
@@ -90,6 +94,8 @@ export async function tasksRoutes(fastify: FastifyInstance) {
                 },
               },
             },
+            enableSoundAlerts: { type: "boolean" },
+            isConcluded: { type: "boolean" },
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },
@@ -255,6 +261,7 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         body: {
           type: "object",
           properties: {
+            boardId: { type: "string", format: "uuid" },
             columnId: { type: "string", format: "uuid" },
             title: { type: "string", minLength: 1, maxLength: 200 },
             description: { type: "string", maxLength: 2000, nullable: true },
@@ -270,6 +277,8 @@ export async function tasksRoutes(fastify: FastifyInstance) {
                 },
               },
             },
+            enableSoundAlerts: { type: "boolean" },
+            isConcluded: { type: "boolean" },
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },

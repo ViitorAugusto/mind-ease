@@ -15,10 +15,13 @@ export const taskColumnIdParamSchema = z.object({
 });
 
 export const createTaskSchema = z.object({
+  boardId: z.string().uuid(),
   columnId: z.string().uuid(),
   title: z.string().min(1).max(200),
   description: z.string().max(2000).nullable().optional(),
   checklist: z.array(checklistItemSchema).optional(),
+  enableSoundAlerts: z.boolean().optional(),
+  isConcluded: z.boolean().optional(),
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
   dueDate: z.string().datetime().nullable().optional(),
   hours: z.number().min(0).optional(),
@@ -26,10 +29,13 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = z
   .object({
+    boardId: z.string().uuid().optional(),
     columnId: z.string().uuid().optional(),
     title: z.string().min(1).max(200).optional(),
     description: z.string().max(2000).nullable().optional(),
     checklist: z.array(checklistItemSchema).optional(),
+    enableSoundAlerts: z.boolean().optional(),
+    isConcluded: z.boolean().optional(),
     status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
     dueDate: z.string().datetime().nullable().optional(),
     hours: z.number().min(0).optional(),

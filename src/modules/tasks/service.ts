@@ -3,11 +3,16 @@ import prisma from "../../shared/db/prisma";
 import { CreateTaskInput, UpdateTaskInput } from "./schemas";
 
 export class TasksService {
-  private async findColumn(userId: string, columnId: string) {
+  private async findColumn(
+    userId: string,
+    columnId: string,
+    boardId?: string,
+  ) {
     const column = await prisma.column.findFirst({
       where: {
         id: columnId,
         userId,
+        ...(boardId ? { boardId } : {}),
       },
     });
 
@@ -18,15 +23,34 @@ export class TasksService {
     return column;
   }
 
+  private async findBoard(userId: string, boardId: string) {
+    const board = await prisma.board.findFirst({
+      where: {
+        id: boardId,
+        userId,
+      },
+    });
+
+    if (!board) {
+      throw new Error("Board nao encontrado");
+    }
+
+    return board;
+  }
+
   async create(userId: string, data: CreateTaskInput) {
-    await this.findColumn(userId, data.columnId);
+    await this.findBoard(userId, data.boardId);
+    await this.findColumn(userId, data.columnId, data.boardId);
 
     const createData: Prisma.TaskUncheckedCreateInput = {
       userId,
+      boardId: data.boardId,
       columnId: data.columnId,
       title: data.title,
       description: data.description ?? null,
       checklist: (data.checklist ?? []) as Prisma.InputJsonValue,
+      enableSoundAlerts: data.enableSoundAlerts ?? false,
+      isConcluded: data.isConcluded ?? false,
       status: (data.status as TaskStatus | undefined) ?? TaskStatus.TODO,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       hours: data.hours ?? 0,
@@ -136,21 +160,34 @@ export class TasksService {
   }
 
   async update(userId: string, taskId: string, data: UpdateTaskInput) {
-    await this.getById(userId, taskId);
+    const existing = await this.getById(userId, taskId);
+    const nextBoardId = data.boardId ?? existing.boardId;
+    const nextColumnId = data.columnId ?? existing.columnId;
 
-    if (data.columnId) {
-      await this.findColumn(userId, data.columnId);
+    if (data.boardId !== undefined) {
+      await this.findBoard(userId, nextBoardId);
+    }
+
+    if (data.columnId !== undefined || data.boardId !== undefined) {
+      await this.findColumn(userId, nextColumnId, nextBoardId);
     }
 
     const updateData: {
+      boardId?: string;
       columnId?: string;
       title?: string;
       description?: string | null;
       checklist?: Prisma.InputJsonValue;
+      enableSoundAlerts?: boolean;
+      isConcluded?: boolean;
       status?: TaskStatus;
       dueDate?: Date | null;
       hours?: number;
     } = {};
+
+    if (data.boardId !== undefined) {
+      updateData.boardId = data.boardId;
+    }
 
     if (data.columnId !== undefined) {
       updateData.columnId = data.columnId;
@@ -166,6 +203,14 @@ export class TasksService {
 
     if (data.checklist !== undefined) {
       updateData.checklist = data.checklist as Prisma.InputJsonValue;
+    }
+
+    if (data.enableSoundAlerts !== undefined) {
+      updateData.enableSoundAlerts = data.enableSoundAlerts;
+    }
+
+    if (data.isConcluded !== undefined) {
+      updateData.isConcluded = data.isConcluded;
     }
 
     if (data.status !== undefined) {
