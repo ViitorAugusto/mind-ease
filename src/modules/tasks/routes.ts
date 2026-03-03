@@ -3,6 +3,7 @@ import { authGuard } from "../../shared/middleware/auth";
 import {
   createTaskSchema,
   taskColumnIdParamSchema,
+  taskBoardColumnParamSchema,
   taskIdParamSchema,
   updateTaskSchema,
 } from "./schemas";
@@ -191,6 +192,56 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         const { columnId } = taskColumnIdParamSchema.parse(request.params);
         const tasks = await tasksService.getAllByColumn(
           request.user.userId,
+          columnId,
+        );
+        return reply.send(tasks);
+      } catch (error: any) {
+        const status = getTaskErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/tasks/board/:boardId/column/:columnId",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Tasks"],
+        description: "Listar tasks por board e coluna",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["boardId", "columnId"],
+          properties: {
+            boardId: { type: "string", format: "uuid" },
+            columnId: { type: "string", format: "uuid" },
+          },
+        },
+        response: {
+          200: {
+            description: "Lista de tasks do board e coluna",
+            type: "array",
+            items: taskSchema,
+          },
+          404: {
+            description: "Board ou column nao encontrado",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { boardId, columnId } = taskBoardColumnParamSchema.parse(
+          request.params,
+        );
+        const tasks = await tasksService.getAllByBoardAndColumn(
+          request.user.userId,
+          boardId,
           columnId,
         );
         return reply.send(tasks);

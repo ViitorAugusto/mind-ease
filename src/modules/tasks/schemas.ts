@@ -14,6 +14,11 @@ export const taskColumnIdParamSchema = z.object({
   columnId: z.string().uuid(),
 });
 
+export const taskBoardColumnParamSchema = z.object({
+  boardId: z.string().uuid(),
+  columnId: z.string().uuid(),
+});
+
 export const createTaskSchema = z.object({
   boardId: z.string().uuid(),
   columnId: z.string().uuid(),
