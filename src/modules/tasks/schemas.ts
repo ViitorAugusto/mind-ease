@@ -30,6 +30,10 @@ export const createTaskSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
   dueDate: z.string().datetime().nullable().optional(),
   hours: z.number().min(0).optional(),
+  focusMinutes: z.number().int().min(1).max(120).optional(),
+  shortBreakMinutes: z.number().int().min(1).max(60).optional(),
+  longBreakMinutes: z.number().int().min(1).max(120).optional(),
+  longBreakEvery: z.number().int().min(1).max(20).optional(),
 });
 
 export const updateTaskSchema = z
@@ -44,10 +48,26 @@ export const updateTaskSchema = z
     status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
     dueDate: z.string().datetime().nullable().optional(),
     hours: z.number().min(0).optional(),
+    focusMinutes: z.number().int().min(1).max(120).optional(),
+    shortBreakMinutes: z.number().int().min(1).max(60).optional(),
+    longBreakMinutes: z.number().int().min(1).max(120).optional(),
+    longBreakEvery: z.number().int().min(1).max(20).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Pelo menos um campo deve ser informado",
   });
 
+export const updateTaskTimerSchema = z
+  .object({
+    focusMinutes: z.number().int().min(1).max(120).optional(),
+    shortBreakMinutes: z.number().int().min(1).max(60).optional(),
+    longBreakMinutes: z.number().int().min(1).max(120).optional(),
+    longBreakEvery: z.number().int().min(1).max(20).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Pelo menos um campo de timer deve ser informado",
+  });
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type UpdateTaskTimerInput = z.infer<typeof updateTaskTimerSchema>;

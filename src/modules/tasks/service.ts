@@ -1,6 +1,6 @@
 import { Prisma, TaskStatus } from "@prisma/client";
 import prisma from "../../shared/db/prisma";
-import { CreateTaskInput, UpdateTaskInput } from "./schemas";
+import { CreateTaskInput, UpdateTaskInput, UpdateTaskTimerInput } from "./schemas";
 
 export class TasksService {
   private async findColumn(
@@ -54,6 +54,10 @@ export class TasksService {
       status: (data.status as TaskStatus | undefined) ?? TaskStatus.TODO,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       hours: data.hours ?? 0,
+      focusMinutes: data.focusMinutes ?? 25,
+      shortBreakMinutes: data.shortBreakMinutes ?? 5,
+      longBreakMinutes: data.longBreakMinutes ?? 15,
+      longBreakEvery: data.longBreakEvery ?? 4,
     };
 
     return prisma.task.create({
@@ -217,6 +221,10 @@ export class TasksService {
       status?: TaskStatus;
       dueDate?: Date | null;
       hours?: number;
+      focusMinutes?: number;
+      shortBreakMinutes?: number;
+      longBreakMinutes?: number;
+      longBreakEvery?: number;
     } = {};
 
     if (data.boardId !== undefined) {
@@ -259,9 +267,50 @@ export class TasksService {
       updateData.hours = data.hours;
     }
 
+    if (data.focusMinutes !== undefined) {
+      updateData.focusMinutes = data.focusMinutes;
+    }
+
+    if (data.shortBreakMinutes !== undefined) {
+      updateData.shortBreakMinutes = data.shortBreakMinutes;
+    }
+
+    if (data.longBreakMinutes !== undefined) {
+      updateData.longBreakMinutes = data.longBreakMinutes;
+    }
+
+    if (data.longBreakEvery !== undefined) {
+      updateData.longBreakEvery = data.longBreakEvery;
+    }
+
     return prisma.task.update({
       where: { id: taskId },
       data: updateData,
+      include: {
+        column: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            board: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updateTimer(userId: string, taskId: string, data: UpdateTaskTimerInput) {
+    await this.getById(userId, taskId);
+
+    return prisma.task.update({
+      where: { id: taskId },
+      data,
       include: {
         column: {
           select: {

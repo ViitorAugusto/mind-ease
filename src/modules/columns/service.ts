@@ -8,6 +8,7 @@ type ColumnWithRelations = {
   boardId: string;
   name: string;
   slug: string;
+  color: string;
   createdAt: Date;
   updatedAt: Date;
   board: {
@@ -27,6 +28,7 @@ function mapColumn(column: ColumnWithRelations) {
     boardId: column.boardId,
     name: column.name,
     slug: column.slug,
+    color: column.color,
     createdAt: column.createdAt,
     updatedAt: column.updatedAt,
     tasksCount: column._count.tasks,
@@ -91,6 +93,7 @@ export class ColumnsService {
         boardId: data.boardId,
         name: data.name,
         slug,
+        color: data.color,
       },
       include: {
         board: {
@@ -240,6 +243,7 @@ export class ColumnsService {
       boardId?: string;
       name?: string;
       slug?: string;
+      color?: string;
     } = {};
 
     if (data.boardId !== undefined) {
@@ -253,6 +257,10 @@ export class ColumnsService {
         data.name,
         existingColumn.id,
       );
+    }
+
+    if (data.color !== undefined) {
+      updateData.color = data.color;
     }
 
     const column = await prisma.column.update({

@@ -17,6 +17,7 @@ const columnSchema = {
     boardId: { type: "string", format: "uuid" },
     name: { type: "string" },
     slug: { type: "string" },
+    color: { type: "string" },
     tasksCount: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
@@ -57,6 +58,10 @@ export async function columnsRoutes(fastify: FastifyInstance) {
           properties: {
             boardId: { type: "string", format: "uuid" },
             name: { type: "string", minLength: 1, maxLength: 120 },
+            color: {
+              type: "string",
+              pattern: "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$",
+            },
           },
         },
         response: {
@@ -263,6 +268,10 @@ export async function columnsRoutes(fastify: FastifyInstance) {
           properties: {
             boardId: { type: "string", format: "uuid" },
             name: { type: "string", minLength: 1, maxLength: 120 },
+            color: {
+              type: "string",
+              pattern: "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$",
+            },
           },
         },
         response: {

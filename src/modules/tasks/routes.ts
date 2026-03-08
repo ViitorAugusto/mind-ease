@@ -5,6 +5,7 @@ import {
   taskColumnIdParamSchema,
   taskBoardColumnParamSchema,
   taskIdParamSchema,
+  updateTaskTimerSchema,
   updateTaskSchema,
 } from "./schemas";
 import { tasksService } from "./service";
@@ -34,6 +35,10 @@ const taskSchema = {
     isConcluded: { type: "boolean" },
     dueDate: { type: "string", format: "date-time", nullable: true },
     hours: { type: "number" },
+    focusMinutes: { type: "number" },
+    shortBreakMinutes: { type: "number" },
+    longBreakMinutes: { type: "number" },
+    longBreakEvery: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
     column: {
@@ -100,6 +105,10 @@ export async function tasksRoutes(fastify: FastifyInstance) {
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },
+            focusMinutes: { type: "number", minimum: 1, maximum: 120 },
+            shortBreakMinutes: { type: "number", minimum: 1, maximum: 60 },
+            longBreakMinutes: { type: "number", minimum: 1, maximum: 120 },
+            longBreakEvery: { type: "number", minimum: 1, maximum: 20 },
           },
         },
         response: {
@@ -333,6 +342,10 @@ export async function tasksRoutes(fastify: FastifyInstance) {
             status: { type: "string", enum: ["TODO", "IN_PROGRESS", "DONE"] },
             dueDate: { type: "string", format: "date-time", nullable: true },
             hours: { type: "number", minimum: 0 },
+            focusMinutes: { type: "number", minimum: 1, maximum: 120 },
+            shortBreakMinutes: { type: "number", minimum: 1, maximum: 60 },
+            longBreakMinutes: { type: "number", minimum: 1, maximum: 120 },
+            longBreakEvery: { type: "number", minimum: 1, maximum: 20 },
           },
         },
         response: {
@@ -355,6 +368,58 @@ export async function tasksRoutes(fastify: FastifyInstance) {
         const { id } = taskIdParamSchema.parse(request.params);
         const data = updateTaskSchema.parse(request.body);
         const task = await tasksService.update(request.user.userId, id, data);
+        return reply.send(task);
+      } catch (error: any) {
+        const status = getTaskErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.patch(
+    "/tasks/:id/timer",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Tasks"],
+        description: "Atualizar apenas timer da task por ID",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+          },
+        },
+        body: {
+          type: "object",
+          properties: {
+            focusMinutes: { type: "number", minimum: 1, maximum: 120 },
+            shortBreakMinutes: { type: "number", minimum: 1, maximum: 60 },
+            longBreakMinutes: { type: "number", minimum: 1, maximum: 120 },
+            longBreakEvery: { type: "number", minimum: 1, maximum: 20 },
+          },
+        },
+        response: {
+          200: {
+            description: "Timer da task atualizado",
+            ...taskSchema,
+          },
+          404: {
+            description: "Task nao encontrada",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = taskIdParamSchema.parse(request.params);
+        const data = updateTaskTimerSchema.parse(request.body);
+        const task = await tasksService.updateTimer(request.user.userId, id, data);
         return reply.send(task);
       } catch (error: any) {
         const status = getTaskErrorStatus(error);

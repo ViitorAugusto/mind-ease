@@ -101,6 +101,7 @@ model Column {
   boardId   String   @map("board_id")
   name      String
   slug      String
+  color     String   @default("#3B82F6")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -123,6 +124,10 @@ model Task {
   checklist   Json       @default("[]")
   isConcluded Boolean    @default(false) @map("is_concluded")
   enableSoundAlerts Boolean @default(false) @map("enable_sound_alerts")
+  focusMinutes      Int  @default(25) @map("focus_minutes")
+  shortBreakMinutes Int  @default(5) @map("short_break_minutes")
+  longBreakMinutes  Int  @default(15) @map("long_break_minutes")
+  longBreakEvery    Int  @default(4) @map("long_break_every")
   status      TaskStatus @default(TODO)
   dueDate     DateTime?  @map("due_date")
   hours       Float      @default(0)
