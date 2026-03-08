@@ -32,5 +32,10 @@ export const updateColumnSchema = z
     message: "Pelo menos um campo deve ser informado",
   });
 
+export const reorderColumnsSchema = z.object({
+  columnIds: z.array(z.string().uuid()).min(1),
+});
+
 export type CreateColumnInput = z.infer<typeof createColumnSchema>;
 export type UpdateColumnInput = z.infer<typeof updateColumnSchema>;
+export type ReorderColumnsInput = z.infer<typeof reorderColumnsSchema>;

@@ -68,6 +68,11 @@ export const updateTaskTimerSchema = z
     message: "Pelo menos um campo de timer deve ser informado",
   });
 
+export const reorderTasksSchema = z.object({
+  taskIds: z.array(z.string().uuid()).min(1),
+});
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type UpdateTaskTimerInput = z.infer<typeof updateTaskTimerSchema>;
+export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>;

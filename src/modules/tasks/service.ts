@@ -2,11 +2,26 @@ import { Prisma, TaskStatus } from "@prisma/client";
 import prisma from "../../shared/db/prisma";
 import {
   CreateTaskInput,
+  ReorderTasksInput,
   UpdateTaskInput,
   UpdateTaskTimerInput,
 } from "./schemas";
 
 export class TasksService {
+  private async getNextPositionForColumn(userId: string, columnId: string) {
+    const result = await prisma.task.aggregate({
+      where: {
+        userId,
+        columnId,
+      },
+      _max: {
+        position: true,
+      },
+    });
+
+    return (result._max.position ?? 0) + 1;
+  }
+
   private async findColumn(userId: string, columnId: string, boardId?: string) {
     const column = await prisma.column.findFirst({
       where: {
@@ -41,6 +56,7 @@ export class TasksService {
   async create(userId: string, data: CreateTaskInput) {
     await this.findBoard(userId, data.boardId);
     await this.findColumn(userId, data.columnId, data.boardId);
+    const position = await this.getNextPositionForColumn(userId, data.columnId);
 
     const createData: Prisma.TaskUncheckedCreateInput = {
       userId,
@@ -58,6 +74,7 @@ export class TasksService {
       shortBreakMinutes: data.shortBreakMinutes ?? 5,
       longBreakMinutes: data.longBreakMinutes ?? 15,
       longBreakEvery: data.longBreakEvery ?? 4,
+      position,
     };
 
     return prisma.task.create({
@@ -84,7 +101,12 @@ export class TasksService {
   async getAll(userId: string) {
     return prisma.task.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { boardId: "asc" },
+        { columnId: "asc" },
+        { position: "asc" },
+        { createdAt: "asc" },
+      ],
       include: {
         column: {
           select: {
@@ -112,7 +134,7 @@ export class TasksService {
         userId,
         columnId,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: {
         column: {
           select: {
@@ -146,7 +168,7 @@ export class TasksService {
         boardId,
         columnId,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: {
         column: {
           select: {
@@ -225,6 +247,7 @@ export class TasksService {
       shortBreakMinutes?: number;
       longBreakMinutes?: number;
       longBreakEvery?: number;
+      position?: number;
     } = {};
 
     if (data.boardId !== undefined) {
@@ -233,6 +256,13 @@ export class TasksService {
 
     if (data.columnId !== undefined) {
       updateData.columnId = data.columnId;
+
+      if (data.columnId !== existing.columnId) {
+        updateData.position = await this.getNextPositionForColumn(
+          userId,
+          data.columnId,
+        );
+      }
     }
 
     if (data.title !== undefined) {
@@ -332,6 +362,47 @@ export class TasksService {
         },
       },
     });
+  }
+
+  async reorderByColumn(
+    userId: string,
+    columnId: string,
+    data: ReorderTasksInput,
+  ) {
+    await this.findColumn(userId, columnId);
+
+    const allTasks = await prisma.task.findMany({
+      where: {
+        userId,
+        columnId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const existingIds = new Set(allTasks.map(task => task.id));
+    const requestedIds = data.taskIds;
+
+    if (
+      requestedIds.length !== allTasks.length ||
+      requestedIds.some(id => !existingIds.has(id))
+    ) {
+      throw new Error("Lista de tasks invalida para reordenacao");
+    }
+
+    await prisma.$transaction(
+      requestedIds.map((taskId, index) =>
+        prisma.task.update({
+          where: { id: taskId },
+          data: {
+            position: index + 1,
+          },
+        }),
+      ),
+    );
+
+    return this.getAllByColumn(userId, columnId);
   }
 
   async delete(userId: string, taskId: string) {

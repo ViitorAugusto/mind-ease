@@ -5,6 +5,7 @@ import {
   columnIdParamSchema,
   columnSlugParamSchema,
   createColumnSchema,
+  reorderColumnsSchema,
   updateColumnSchema,
 } from "./schemas";
 import { columnsService } from "./service";
@@ -18,6 +19,7 @@ const columnSchema = {
     name: { type: "string" },
     slug: { type: "string" },
     color: { type: "string" },
+    position: { type: "number" },
     tasksCount: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
@@ -344,6 +346,68 @@ export async function columnsRoutes(fastify: FastifyInstance) {
         const { id } = columnIdParamSchema.parse(request.params);
         await columnsService.delete(request.user.userId, id);
         return reply.status(204).send();
+      } catch (error: any) {
+        const status = getColumnErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.patch(
+    "/columns/board/:boardId/reorder",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Columns"],
+        description: "Reordenar colunas de um board",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["boardId"],
+          properties: {
+            boardId: { type: "string", format: "uuid" },
+          },
+        },
+        body: {
+          type: "object",
+          required: ["columnIds"],
+          properties: {
+            columnIds: {
+              type: "array",
+              minItems: 1,
+              items: {
+                type: "string",
+                format: "uuid",
+              },
+            },
+          },
+        },
+        response: {
+          200: {
+            description: "Colunas reordenadas",
+            type: "array",
+            items: columnSchema,
+          },
+          404: {
+            description: "Board nao encontrado",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { boardId } = columnBoardIdParamSchema.parse(request.params);
+        const data = reorderColumnsSchema.parse(request.body);
+        const columns = await columnsService.reorderByBoard(
+          request.user.userId,
+          boardId,
+          data,
+        );
+        return reply.send(columns);
       } catch (error: any) {
         const status = getColumnErrorStatus(error);
         return reply.status(status).send({ error: error.message });

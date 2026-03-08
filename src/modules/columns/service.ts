@@ -1,6 +1,10 @@
 import prisma from "../../shared/db/prisma";
 import { toSlug } from "../../shared/utils/slug";
-import { CreateColumnInput, UpdateColumnInput } from "./schemas";
+import {
+  CreateColumnInput,
+  ReorderColumnsInput,
+  UpdateColumnInput,
+} from "./schemas";
 
 type ColumnWithRelations = {
   id: string;
@@ -9,6 +13,7 @@ type ColumnWithRelations = {
   name: string;
   slug: string;
   color: string;
+  position: number;
   createdAt: Date;
   updatedAt: Date;
   board: {
@@ -29,6 +34,7 @@ function mapColumn(column: ColumnWithRelations) {
     name: column.name,
     slug: column.slug,
     color: column.color,
+    position: column.position,
     createdAt: column.createdAt,
     updatedAt: column.updatedAt,
     tasksCount: column._count.tasks,
@@ -37,6 +43,20 @@ function mapColumn(column: ColumnWithRelations) {
 }
 
 export class ColumnsService {
+  private async getNextPositionForBoard(userId: string, boardId: string) {
+    const result = await prisma.column.aggregate({
+      where: {
+        userId,
+        boardId,
+      },
+      _max: {
+        position: true,
+      },
+    });
+
+    return (result._max.position ?? 0) + 1;
+  }
+
   private async ensureBoard(userId: string, boardId: string) {
     const board = await prisma.board.findFirst({
       where: {
@@ -86,6 +106,7 @@ export class ColumnsService {
   async create(userId: string, data: CreateColumnInput) {
     await this.ensureBoard(userId, data.boardId);
     const slug = await this.generateUniqueSlug(userId, data.name);
+    const position = await this.getNextPositionForBoard(userId, data.boardId);
 
     const column = await prisma.column.create({
       data: {
@@ -94,6 +115,7 @@ export class ColumnsService {
         name: data.name,
         slug,
         color: data.color,
+        position,
       },
       include: {
         board: {
@@ -117,7 +139,7 @@ export class ColumnsService {
   async getAll(userId: string) {
     const columns = await prisma.column.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ boardId: "asc" }, { position: "asc" }, { createdAt: "asc" }],
       include: {
         board: {
           select: {
@@ -145,7 +167,7 @@ export class ColumnsService {
         userId,
         boardId,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: {
         board: {
           select: {
@@ -244,10 +266,18 @@ export class ColumnsService {
       name?: string;
       slug?: string;
       color?: string;
+      position?: number;
     } = {};
 
     if (data.boardId !== undefined) {
       updateData.boardId = data.boardId;
+
+      if (data.boardId !== existingColumn.boardId) {
+        updateData.position = await this.getNextPositionForBoard(
+          userId,
+          data.boardId,
+        );
+      }
     }
 
     if (data.name !== undefined) {
@@ -283,6 +313,47 @@ export class ColumnsService {
     });
 
     return mapColumn(column);
+  }
+
+  async reorderByBoard(
+    userId: string,
+    boardId: string,
+    data: ReorderColumnsInput,
+  ) {
+    await this.ensureBoard(userId, boardId);
+
+    const allColumns = await prisma.column.findMany({
+      where: {
+        userId,
+        boardId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const existingIds = new Set(allColumns.map(column => column.id));
+    const requestedIds = data.columnIds;
+
+    if (
+      requestedIds.length !== allColumns.length ||
+      requestedIds.some(id => !existingIds.has(id))
+    ) {
+      throw new Error("Lista de colunas invalida para reordenacao");
+    }
+
+    await prisma.$transaction(
+      requestedIds.map((columnId, index) =>
+        prisma.column.update({
+          where: { id: columnId },
+          data: {
+            position: index + 1,
+          },
+        }),
+      ),
+    );
+
+    return this.getAllByBoard(userId, boardId);
   }
 
   async delete(userId: string, columnId: string) {

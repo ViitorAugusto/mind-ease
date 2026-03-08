@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { authGuard } from "../../shared/middleware/auth";
 import {
   createTaskSchema,
+  reorderTasksSchema,
   taskColumnIdParamSchema,
   taskBoardColumnParamSchema,
   taskIdParamSchema,
@@ -39,6 +40,7 @@ const taskSchema = {
     shortBreakMinutes: { type: "number" },
     longBreakMinutes: { type: "number" },
     longBreakEvery: { type: "number" },
+    position: { type: "number" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
     column: {
@@ -425,6 +427,68 @@ export async function tasksRoutes(fastify: FastifyInstance) {
           data,
         );
         return reply.send(task);
+      } catch (error: any) {
+        const status = getTaskErrorStatus(error);
+        return reply.status(status).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.patch(
+    "/tasks/column/:columnId/reorder",
+    {
+      onRequest: [authGuard],
+      schema: {
+        tags: ["Tasks"],
+        description: "Reordenar tasks dentro de uma coluna",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["columnId"],
+          properties: {
+            columnId: { type: "string", format: "uuid" },
+          },
+        },
+        body: {
+          type: "object",
+          required: ["taskIds"],
+          properties: {
+            taskIds: {
+              type: "array",
+              minItems: 1,
+              items: {
+                type: "string",
+                format: "uuid",
+              },
+            },
+          },
+        },
+        response: {
+          200: {
+            description: "Tasks reordenadas",
+            type: "array",
+            items: taskSchema,
+          },
+          404: {
+            description: "Column nao encontrada",
+            type: "object",
+            properties: {
+              error: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { columnId } = taskColumnIdParamSchema.parse(request.params);
+        const data = reorderTasksSchema.parse(request.body);
+        const tasks = await tasksService.reorderByColumn(
+          request.user.userId,
+          columnId,
+          data,
+        );
+        return reply.send(tasks);
       } catch (error: any) {
         const status = getTaskErrorStatus(error);
         return reply.status(status).send({ error: error.message });

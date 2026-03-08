@@ -102,6 +102,7 @@ model Column {
   name      String
   slug      String
   color     String   @default("#3B82F6")
+  position  Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -110,6 +111,7 @@ model Column {
   tasks Task[]
 
   @@index([userId, boardId])
+  @@index([boardId, position])
   @@unique([userId, slug])
   @@map("columns")
 }
@@ -128,6 +130,7 @@ model Task {
   shortBreakMinutes Int  @default(5) @map("short_break_minutes")
   longBreakMinutes  Int  @default(15) @map("long_break_minutes")
   longBreakEvery    Int  @default(4) @map("long_break_every")
+  position          Int  @default(0)
   status      TaskStatus @default(TODO)
   dueDate     DateTime?  @map("due_date")
   hours       Float      @default(0)
@@ -139,6 +142,7 @@ model Task {
   column Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
   @@index([userId, columnId, boardId])
+  @@index([columnId, position])
   @@map("tasks")
 }
 
