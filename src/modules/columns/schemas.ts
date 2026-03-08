@@ -28,7 +28,7 @@ export const updateColumnSchema = z
     name: z.string().min(1).max(120).optional(),
     color: colorSchema.optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine(data => Object.keys(data).length > 0, {
     message: "Pelo menos um campo deve ser informado",
   });
 

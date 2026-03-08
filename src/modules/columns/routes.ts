@@ -197,7 +197,10 @@ export async function columnsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const { slug } = columnSlugParamSchema.parse(request.params);
-        const column = await columnsService.getBySlug(request.user.userId, slug);
+        const column = await columnsService.getBySlug(
+          request.user.userId,
+          slug,
+        );
         return reply.send(column);
       } catch (error: any) {
         const status = getColumnErrorStatus(error);
@@ -293,7 +296,11 @@ export async function columnsRoutes(fastify: FastifyInstance) {
       try {
         const { id } = columnIdParamSchema.parse(request.params);
         const data = updateColumnSchema.parse(request.body);
-        const column = await columnsService.update(request.user.userId, id, data);
+        const column = await columnsService.update(
+          request.user.userId,
+          id,
+          data,
+        );
         return reply.send(column);
       } catch (error: any) {
         const status = getColumnErrorStatus(error);

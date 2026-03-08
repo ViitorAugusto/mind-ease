@@ -1,13 +1,13 @@
 import { Prisma, TaskStatus } from "@prisma/client";
 import prisma from "../../shared/db/prisma";
-import { CreateTaskInput, UpdateTaskInput, UpdateTaskTimerInput } from "./schemas";
+import {
+  CreateTaskInput,
+  UpdateTaskInput,
+  UpdateTaskTimerInput,
+} from "./schemas";
 
 export class TasksService {
-  private async findColumn(
-    userId: string,
-    columnId: string,
-    boardId?: string,
-  ) {
+  private async findColumn(userId: string, columnId: string, boardId?: string) {
     const column = await prisma.column.findFirst({
       where: {
         id: columnId,
@@ -305,7 +305,11 @@ export class TasksService {
     });
   }
 
-  async updateTimer(userId: string, taskId: string, data: UpdateTaskTimerInput) {
+  async updateTimer(
+    userId: string,
+    taskId: string,
+    data: UpdateTaskTimerInput,
+  ) {
     await this.getById(userId, taskId);
 
     return prisma.task.update({

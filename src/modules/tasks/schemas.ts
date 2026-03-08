@@ -53,7 +53,7 @@ export const updateTaskSchema = z
     longBreakMinutes: z.number().int().min(1).max(120).optional(),
     longBreakEvery: z.number().int().min(1).max(20).optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine(data => Object.keys(data).length > 0, {
     message: "Pelo menos um campo deve ser informado",
   });
 
@@ -64,7 +64,7 @@ export const updateTaskTimerSchema = z
     longBreakMinutes: z.number().int().min(1).max(120).optional(),
     longBreakEvery: z.number().int().min(1).max(20).optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine(data => Object.keys(data).length > 0, {
     message: "Pelo menos um campo de timer deve ser informado",
   });
 

@@ -419,7 +419,11 @@ export async function tasksRoutes(fastify: FastifyInstance) {
       try {
         const { id } = taskIdParamSchema.parse(request.params);
         const data = updateTaskTimerSchema.parse(request.body);
-        const task = await tasksService.updateTimer(request.user.userId, id, data);
+        const task = await tasksService.updateTimer(
+          request.user.userId,
+          id,
+          data,
+        );
         return reply.send(task);
       } catch (error: any) {
         const status = getTaskErrorStatus(error);
